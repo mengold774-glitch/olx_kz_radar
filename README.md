@@ -1,2 +1,2 @@
-# olx_Kz_radar
+# olx_kz_radar
 
