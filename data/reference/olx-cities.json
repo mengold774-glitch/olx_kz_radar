@@ -1,0 +1,1213 @@
+{
+ "1": {
+  "id": 1,
+  "name": "Алматы",
+  "normalized_name": "alma-ata",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "3": {
+  "id": 3,
+  "name": "Ленгер",
+  "normalized_name": "lenger",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "4": {
+  "id": 4,
+  "name": "Жетысай",
+  "normalized_name": "jetysay",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "7": {
+  "id": 7,
+  "name": "Петропавловск",
+  "normalized_name": "petropavlovsk",
+  "region_id": 11,
+  "region_name": "Северо-Казахстанская область"
+ },
+ "9": {
+  "id": 9,
+  "name": "Кульсары",
+  "normalized_name": "kulsary",
+  "region_id": 4,
+  "region_name": "Атырауская область"
+ },
+ "13": {
+  "id": 13,
+  "name": "Булаево",
+  "normalized_name": "bulaevo",
+  "region_id": 11,
+  "region_name": "Северо-Казахстанская область"
+ },
+ "16": {
+  "id": 16,
+  "name": "Степногорск",
+  "normalized_name": "stepnogorsk",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "19": {
+  "id": 19,
+  "name": "Уральск",
+  "normalized_name": "uralsk",
+  "region_id": 7,
+  "region_name": "Западно-Казахстанская область"
+ },
+ "20": {
+  "id": 20,
+  "name": "Каскелен",
+  "normalized_name": "kaskelen",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "22": {
+  "id": 22,
+  "name": "Есик",
+  "normalized_name": "esik",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "24": {
+  "id": 24,
+  "name": "Кокшетау",
+  "normalized_name": "kokshetau",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "25": {
+  "id": 25,
+  "name": "Хромтау",
+  "normalized_name": "hromtau",
+  "region_id": 2,
+  "region_name": "Актюбинская область"
+ },
+ "26": {
+  "id": 26,
+  "name": "Актобе",
+  "normalized_name": "aktobe",
+  "region_id": 2,
+  "region_name": "Актюбинская область"
+ },
+ "28": {
+  "id": 28,
+  "name": "Атырау",
+  "normalized_name": "atyrau",
+  "region_id": 4,
+  "region_name": "Атырауская область"
+ },
+ "36": {
+  "id": 36,
+  "name": "Павлодар",
+  "normalized_name": "pavlodar",
+  "region_id": 1,
+  "region_name": "Павлодарская область"
+ },
+ "37": {
+  "id": 37,
+  "name": "Текели",
+  "normalized_name": "tekeli",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "38": {
+  "id": 38,
+  "name": "Жезказган",
+  "normalized_name": "jezkazgan",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "39": {
+  "id": 39,
+  "name": "Караганда",
+  "normalized_name": "karaganda",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "40": {
+  "id": 40,
+  "name": "Талдыкорган",
+  "normalized_name": "taldykorgan",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "45": {
+  "id": 45,
+  "name": "Кызылорда",
+  "normalized_name": "kyzylorda",
+  "region_id": 3,
+  "region_name": "Кызылординская область"
+ },
+ "46": {
+  "id": 46,
+  "name": "Уштобе",
+  "normalized_name": "ushtobe",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "47": {
+  "id": 47,
+  "name": "Шымкент",
+  "normalized_name": "shymkent",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "48": {
+  "id": 48,
+  "name": "Аркалык",
+  "normalized_name": "arkalyk",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "49": {
+  "id": 49,
+  "name": "Лисаковск",
+  "normalized_name": "lisakovsk",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "50": {
+  "id": 50,
+  "name": "Актау",
+  "normalized_name": "aktau",
+  "region_id": 7,
+  "region_name": "Западно-Казахстанская область"
+ },
+ "51": {
+  "id": 51,
+  "name": "Костанай",
+  "normalized_name": "kostanay",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "52": {
+  "id": 52,
+  "name": "Усть-Каменогорск",
+  "normalized_name": "ust-kamenogorsk",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "53": {
+  "id": 53,
+  "name": "Тараз",
+  "normalized_name": "taraz",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "55": {
+  "id": 55,
+  "name": "Зыряновск",
+  "normalized_name": "zyryanovsk",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "56": {
+  "id": 56,
+  "name": "Макинск",
+  "normalized_name": "makinsk",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "57": {
+  "id": 57,
+  "name": "Акколь",
+  "normalized_name": "akkol",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "58": {
+  "id": 58,
+  "name": "Семей",
+  "normalized_name": "semey",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "59": {
+  "id": 59,
+  "name": "Талгар",
+  "normalized_name": "talgar",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "62": {
+  "id": 62,
+  "name": "Форт-Шевченко",
+  "normalized_name": "fort-shevchenko",
+  "region_id": 9,
+  "region_name": "Мангистауская область"
+ },
+ "65": {
+  "id": 65,
+  "name": "Темиртау",
+  "normalized_name": "temirtau",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "69": {
+  "id": 69,
+  "name": "Шу",
+  "normalized_name": "shu",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "70": {
+  "id": 70,
+  "name": "Риддер",
+  "normalized_name": "ridder",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "71": {
+  "id": 71,
+  "name": "Зайсан",
+  "normalized_name": "zaysan",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "72": {
+  "id": 72,
+  "name": "Балхаш",
+  "normalized_name": "balhash",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "73": {
+  "id": 73,
+  "name": "Шахтинск",
+  "normalized_name": "shahtinsk",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "74": {
+  "id": 74,
+  "name": "Туркестан",
+  "normalized_name": "turkestan",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "75": {
+  "id": 75,
+  "name": "Курчатов",
+  "normalized_name": "kurchatov",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "79": {
+  "id": 79,
+  "name": "Рудный",
+  "normalized_name": "rudnyy",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "81": {
+  "id": 81,
+  "name": "Щучинск",
+  "normalized_name": "schuchinsk",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "82": {
+  "id": 82,
+  "name": "Сарань",
+  "normalized_name": "saran",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "85": {
+  "id": 85,
+  "name": "Экибастуз",
+  "normalized_name": "ekibastuz",
+  "region_id": 1,
+  "region_name": "Павлодарская область"
+ },
+ "87": {
+  "id": 87,
+  "name": "Астана",
+  "normalized_name": "astana",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "137": {
+  "id": 137,
+  "name": "Красный Яр",
+  "normalized_name": "krasnyy-yar",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "191": {
+  "id": 191,
+  "name": "Жарсуат",
+  "normalized_name": "zharsuat",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "295": {
+  "id": 295,
+  "name": "Макинка",
+  "normalized_name": "makinka",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "299": {
+  "id": 299,
+  "name": "Валиханово",
+  "normalized_name": "ualihanov",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "431": {
+  "id": 431,
+  "name": "Акколь",
+  "normalized_name": "akkol_431",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "541": {
+  "id": 541,
+  "name": "Бектау",
+  "normalized_name": "bektau",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "545": {
+  "id": 545,
+  "name": "Бозайгыр",
+  "normalized_name": "bozaygyr",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "563": {
+  "id": 563,
+  "name": "Шортанды",
+  "normalized_name": "shortandy",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "571": {
+  "id": 571,
+  "name": "Бурабай",
+  "normalized_name": "burabai",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ },
+ "787": {
+  "id": 787,
+  "name": "Нура",
+  "normalized_name": "nura",
+  "region_id": 2,
+  "region_name": "Актюбинская область"
+ },
+ "803": {
+  "id": 803,
+  "name": "Бадамша",
+  "normalized_name": "batamsha",
+  "region_id": 2,
+  "region_name": "Актюбинская область"
+ },
+ "925": {
+  "id": 925,
+  "name": "Кызылжар",
+  "normalized_name": "kyzylzhar_925",
+  "region_id": 2,
+  "region_name": "Актюбинская область"
+ },
+ "1081": {
+  "id": 1081,
+  "name": "Ойтоган",
+  "normalized_name": "oytogan",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1101": {
+  "id": 1101,
+  "name": "Байзерек",
+  "normalized_name": "bayzerek",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1125": {
+  "id": 1125,
+  "name": "Казахстан",
+  "normalized_name": "kazahstan",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1291": {
+  "id": 1291,
+  "name": "Байтерек",
+  "normalized_name": "novoalekseevka_1291",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1301": {
+  "id": 1301,
+  "name": "Ташкенсаз",
+  "normalized_name": "tashkensaz",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1303": {
+  "id": 1303,
+  "name": "Тургень",
+  "normalized_name": "turgen",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1309": {
+  "id": 1309,
+  "name": "Абай",
+  "normalized_name": "abay_1309",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1413": {
+  "id": 1413,
+  "name": "Узынагаш",
+  "normalized_name": "uzynagash",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1423": {
+  "id": 1423,
+  "name": "Мухаметжан Туймебаева",
+  "normalized_name": "aschibulak",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1427": {
+  "id": 1427,
+  "name": "Байсерке",
+  "normalized_name": "bayserke",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1433": {
+  "id": 1433,
+  "name": "Боралдай",
+  "normalized_name": "boralday",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1439": {
+  "id": 1439,
+  "name": "Чапаево",
+  "normalized_name": "chapaev",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1445": {
+  "id": 1445,
+  "name": "Казцик",
+  "normalized_name": "kaztsik",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1447": {
+  "id": 1447,
+  "name": "Коккайнар",
+  "normalized_name": "kokkaynar",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1457": {
+  "id": 1457,
+  "name": "Отеген батыра",
+  "normalized_name": "otegen-batyr",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1469": {
+  "id": 1469,
+  "name": "Жанадаур",
+  "normalized_name": "zhana-dauir",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1473": {
+  "id": 1473,
+  "name": "Жетыген",
+  "normalized_name": "zhetigen",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1479": {
+  "id": 1479,
+  "name": "Жапек батыра",
+  "normalized_name": "zhapek-batyra",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1485": {
+  "id": 1485,
+  "name": "Конаев (Капчагай)",
+  "normalized_name": "kapshagay_1485",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1503": {
+  "id": 1503,
+  "name": "Мерей",
+  "normalized_name": "merei",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1511": {
+  "id": 1511,
+  "name": "Алгабас",
+  "normalized_name": "algabas",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1513": {
+  "id": 1513,
+  "name": "Алмалыбак",
+  "normalized_name": "almalybak",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1517": {
+  "id": 1517,
+  "name": "Бекболат Ашекеев",
+  "normalized_name": "bekbolat",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1525": {
+  "id": 1525,
+  "name": "Иргели",
+  "normalized_name": "irgeli",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1529": {
+  "id": 1529,
+  "name": "Каменка",
+  "normalized_name": "kamenka_1529",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1533": {
+  "id": 1533,
+  "name": "Каргалы",
+  "normalized_name": "kargaly_1533",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1543": {
+  "id": 1543,
+  "name": "Коксай",
+  "normalized_name": "koksay",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1545": {
+  "id": 1545,
+  "name": "Кольди",
+  "normalized_name": "koldi_1545",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1569": {
+  "id": 1569,
+  "name": "Жанатурмыс",
+  "normalized_name": "zhanaturmys",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1571": {
+  "id": 1571,
+  "name": "Жандосово",
+  "normalized_name": "zhandosova",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1579": {
+  "id": 1579,
+  "name": "Ескельди би",
+  "normalized_name": "eskeldy",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1613": {
+  "id": 1613,
+  "name": "Коянкоз",
+  "normalized_name": "koyankoz",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1625": {
+  "id": 1625,
+  "name": "Сарыозек",
+  "normalized_name": "saryozek",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1661": {
+  "id": 1661,
+  "name": "Мукры",
+  "normalized_name": "mukry",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1663": {
+  "id": 1663,
+  "name": "Шанырак",
+  "normalized_name": "shanyrak",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1795": {
+  "id": 1795,
+  "name": "Абай",
+  "normalized_name": "abay_1795",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1853": {
+  "id": 1853,
+  "name": "Алмалык",
+  "normalized_name": "almalyk",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1855": {
+  "id": 1855,
+  "name": "Белбулак",
+  "normalized_name": "belbulak",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1857": {
+  "id": 1857,
+  "name": "Бесагаш",
+  "normalized_name": "besagash",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1867": {
+  "id": 1867,
+  "name": "Гульдала",
+  "normalized_name": "guldala",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "1901": {
+  "id": 1901,
+  "name": "Туздыбастау",
+  "normalized_name": "tuzdybastau",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "2003": {
+  "id": 2003,
+  "name": "Аксай",
+  "normalized_name": "aksay_2003",
+  "region_id": 4,
+  "region_name": "Атырауская область"
+ },
+ "2005": {
+  "id": 2005,
+  "name": "Акжар",
+  "normalized_name": "akzhar_2005",
+  "region_id": 4,
+  "region_name": "Атырауская область"
+ },
+ "2037": {
+  "id": 2037,
+  "name": "Балыкши",
+  "normalized_name": "balykshi",
+  "region_id": 4,
+  "region_name": "Атырауская область"
+ },
+ "2047": {
+  "id": 2047,
+  "name": "Геолог",
+  "normalized_name": "geolog",
+  "region_id": 4,
+  "region_name": "Атырауская область"
+ },
+ "2079": {
+  "id": 2079,
+  "name": "Сарыкамыс",
+  "normalized_name": "sarykamys",
+  "region_id": 4,
+  "region_name": "Атырауская область"
+ },
+ "2185": {
+  "id": 2185,
+  "name": "Акжайык",
+  "normalized_name": "akzhaik",
+  "region_id": 4,
+  "region_name": "Атырауская область"
+ },
+ "2197": {
+  "id": 2197,
+  "name": "Сарайчик",
+  "normalized_name": "opytnoe-pole",
+  "region_id": 4,
+  "region_name": "Атырауская область"
+ },
+ "2215": {
+  "id": 2215,
+  "name": "Аягоз",
+  "normalized_name": "ayagoz",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "2387": {
+  "id": 2387,
+  "name": "Калбатау",
+  "normalized_name": "georgievka_2387",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "2573": {
+  "id": 2573,
+  "name": "Акбулак",
+  "normalized_name": "akbulak",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "2799": {
+  "id": 2799,
+  "name": "Урджар",
+  "normalized_name": "urzhar",
+  "region_id": 14,
+  "region_name": "Восточно-Казахстанская область"
+ },
+ "3169": {
+  "id": 3169,
+  "name": "Интернациональное",
+  "normalized_name": "internatsionalnoe",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "3253": {
+  "id": 3253,
+  "name": "Тельмана",
+  "normalized_name": "telmana_3253",
+  "region_id": 8,
+  "region_name": "Алматинская область"
+ },
+ "3309": {
+  "id": 3309,
+  "name": "Байзак",
+  "normalized_name": "bayzak",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3311": {
+  "id": 3311,
+  "name": "Бурыл",
+  "normalized_name": "buryl",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3331": {
+  "id": 3331,
+  "name": "Талас",
+  "normalized_name": "talas_3331",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3407": {
+  "id": 3407,
+  "name": "Айшабиби",
+  "normalized_name": "aysha-bibi",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3413": {
+  "id": 3413,
+  "name": "Бектобе",
+  "normalized_name": "bektobe",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3427": {
+  "id": 3427,
+  "name": "Кумшагал",
+  "normalized_name": "kumshagal",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3435": {
+  "id": 3435,
+  "name": "Пригородное",
+  "normalized_name": "prigorodnoe_3435",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3443": {
+  "id": 3443,
+  "name": "Турксиб",
+  "normalized_name": "turksib",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3507": {
+  "id": 3507,
+  "name": "Кордай",
+  "normalized_name": "korday",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3693": {
+  "id": 3693,
+  "name": "Болтирик шешен",
+  "normalized_name": "boltirik",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3731": {
+  "id": 3731,
+  "name": "им.Балуана Шолака",
+  "normalized_name": "baluan-sholak",
+  "region_id": 10,
+  "region_name": "Жамбылская область"
+ },
+ "3843": {
+  "id": 3843,
+  "name": "Аксай",
+  "normalized_name": "aksay_3843",
+  "region_id": 7,
+  "region_name": "Западно-Казахстанская область"
+ },
+ "3941": {
+  "id": 3941,
+  "name": "Мичуринское",
+  "normalized_name": "michurinskoe",
+  "region_id": 7,
+  "region_name": "Западно-Казахстанская область"
+ },
+ "3961": {
+  "id": 3961,
+  "name": "Большой Чаган",
+  "normalized_name": "shagan_3961",
+  "region_id": 7,
+  "region_name": "Западно-Казахстанская область"
+ },
+ "4197": {
+  "id": 4197,
+  "name": "Абай",
+  "normalized_name": "abay_4197",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4297": {
+  "id": 4297,
+  "name": "Нуркен",
+  "normalized_name": "nurken",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4327": {
+  "id": 4327,
+  "name": "Шашубай",
+  "normalized_name": "shashubay",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4349": {
+  "id": 4349,
+  "name": "Габидена Мустафина",
+  "normalized_name": "g-mustafina",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4425": {
+  "id": 4425,
+  "name": "Сатпаев",
+  "normalized_name": "satpaev_4425",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4435": {
+  "id": 4435,
+  "name": "Жезды",
+  "normalized_name": "zhezdy",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4621": {
+  "id": 4621,
+  "name": "Акбулак",
+  "normalized_name": "akbulak_4621",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4627": {
+  "id": 4627,
+  "name": "Чапаево",
+  "normalized_name": "chapaevo_4627",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4721": {
+  "id": 4721,
+  "name": "Долинка",
+  "normalized_name": "dolinka",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4723": {
+  "id": 4723,
+  "name": "Каражар",
+  "normalized_name": "karazhar_4723",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4729": {
+  "id": 4729,
+  "name": "Шахан",
+  "normalized_name": "shahan",
+  "region_id": 5,
+  "region_name": "Карагандинская область"
+ },
+ "4777": {
+  "id": 4777,
+  "name": "Аманкарагай",
+  "normalized_name": "amankaragay",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "4779": {
+  "id": 4779,
+  "name": "Аулиеколь",
+  "normalized_name": "auliekol",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "4801": {
+  "id": 4801,
+  "name": "Октябрьское",
+  "normalized_name": "oktyabrskiy_4801",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "4899": {
+  "id": 4899,
+  "name": "Житикара",
+  "normalized_name": "zhitikara_4899",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "5047": {
+  "id": 5047,
+  "name": "Большая Чураковка",
+  "normalized_name": "bolshaya-churakovka",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "5101": {
+  "id": 5101,
+  "name": "Заречное",
+  "normalized_name": "zarechnoe_5101",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "5103": {
+  "id": 5103,
+  "name": "Затобольск",
+  "normalized_name": "zatobolsk",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "5279": {
+  "id": 5279,
+  "name": "Банновка",
+  "normalized_name": "bannovka",
+  "region_id": 12,
+  "region_name": "Костанайская область"
+ },
+ "5321": {
+  "id": 5321,
+  "name": "Абай",
+  "normalized_name": "abay_5321",
+  "region_id": 3,
+  "region_name": "Кызылординская область"
+ },
+ "5527": {
+  "id": 5527,
+  "name": "им.Жанкожа батыра",
+  "normalized_name": "zhankozha-batyr",
+  "region_id": 3,
+  "region_name": "Кызылординская область"
+ },
+ "5631": {
+  "id": 5631,
+  "name": "Акшукур",
+  "normalized_name": "akshukyr",
+  "region_id": 9,
+  "region_name": "Мангистауская область"
+ },
+ "5633": {
+  "id": 5633,
+  "name": "Актау",
+  "normalized_name": "aktau_5633",
+  "region_id": 9,
+  "region_name": "Мангистауская область"
+ },
+ "5655": {
+  "id": 5655,
+  "name": "Мангистау",
+  "normalized_name": "mangistau",
+  "region_id": 9,
+  "region_name": "Мангистауская область"
+ },
+ "5689": {
+  "id": 5689,
+  "name": "Аксу",
+  "normalized_name": "aksu_5689",
+  "region_id": 1,
+  "region_name": "Павлодарская область"
+ },
+ "5743": {
+  "id": 5743,
+  "name": "Муткенова",
+  "normalized_name": "mutkenovo",
+  "region_id": 1,
+  "region_name": "Павлодарская область"
+ },
+ "5823": {
+  "id": 5823,
+  "name": "Луговое",
+  "normalized_name": "lugovoe_5823",
+  "region_id": 1,
+  "region_name": "Павлодарская область"
+ },
+ "5903": {
+  "id": 5903,
+  "name": "Ленинский",
+  "normalized_name": "leninskoe_5903",
+  "region_id": 1,
+  "region_name": "Павлодарская область"
+ },
+ "6133": {
+  "id": 6133,
+  "name": "Бостандык",
+  "normalized_name": "bostandykskoe",
+  "region_id": 11,
+  "region_name": "Северо-Казахстанская область"
+ },
+ "6145": {
+  "id": 6145,
+  "name": "Коммунизм",
+  "normalized_name": "kommunizm_6145",
+  "region_id": 11,
+  "region_name": "Северо-Казахстанская область"
+ },
+ "6165": {
+  "id": 6165,
+  "name": "Талшик",
+  "normalized_name": "talshyk",
+  "region_id": 11,
+  "region_name": "Северо-Казахстанская область"
+ },
+ "6281": {
+  "id": 6281,
+  "name": "Бесколь",
+  "normalized_name": "bishkul",
+  "region_id": 11,
+  "region_name": "Северо-Казахстанская область"
+ },
+ "6291": {
+  "id": 6291,
+  "name": "Налобино",
+  "normalized_name": "nalobino",
+  "region_id": 11,
+  "region_name": "Северо-Казахстанская область"
+ },
+ "6607": {
+  "id": 6607,
+  "name": "Мичурино",
+  "normalized_name": "michurino_6607",
+  "region_id": 11,
+  "region_name": "Северо-Казахстанская область"
+ },
+ "6725": {
+  "id": 6725,
+  "name": "Нурмухамеда Есентаева",
+  "normalized_name": "dzerzhinskiy",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "6843": {
+  "id": 6843,
+  "name": "Жолбарыса Калшораева",
+  "normalized_name": "internatsionalnoe_6843",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "6903": {
+  "id": 6903,
+  "name": "Уялыжар",
+  "normalized_name": "uyalyzhar",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "6933": {
+  "id": 6933,
+  "name": "Шаульдер",
+  "normalized_name": "shaulder",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "6981": {
+  "id": 6981,
+  "name": "Сайрам",
+  "normalized_name": "sayram",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "6989": {
+  "id": 6989,
+  "name": "Жибек жолы",
+  "normalized_name": "zhibek-zholy",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "7035": {
+  "id": 7035,
+  "name": "Сарыагаш",
+  "normalized_name": "saryagash_7035",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "7105": {
+  "id": 7105,
+  "name": "Султанрабат",
+  "normalized_name": "sultanrabat",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "7139": {
+  "id": 7139,
+  "name": "Кентау",
+  "normalized_name": "kentau_7139",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "7153": {
+  "id": 7153,
+  "name": "Сауран",
+  "normalized_name": "sauran",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "7251": {
+  "id": 7251,
+  "name": "Кайтпас",
+  "normalized_name": "kaytpas",
+  "region_id": 6,
+  "region_name": "Туркестанская область"
+ },
+ "7301": {
+  "id": 7301,
+  "name": "Косшы",
+  "normalized_name": "kosshy",
+  "region_id": 13,
+  "region_name": "Акмолинская область"
+ }
+}
