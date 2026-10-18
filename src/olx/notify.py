@@ -151,26 +151,72 @@ def _caption(listing: Listing, watch: Watch, *, reason: Literal["new", "pushup"]
 async def _send_photo(
     client: httpx.AsyncClient, chat_id: int, photo_url: str, caption: str | None = None
 ) -> bool:
-    data: dict[str, str | int] = {"chat_id": chat_id, "photo": photo_url}
+    try:
+        image_response = await client.get(photo_url)
+    except httpx.RequestError:
+        return False
+    if image_response.status_code != 200 or not image_response.content:
+        return False
+
+    data: dict[str, str | int] = {"chat_id": chat_id}
     if caption is not None:
         data.update({"caption": caption, "parse_mode": "HTML"})
-    response = await client.post(
-        _api_url("sendPhoto"),
-        data=data,
-    )
+    try:
+        response = await client.post(
+            _api_url("sendPhoto"),
+            data=data,
+            files={
+                "photo": (
+                    "listing.jpg",
+                    image_response.content,
+                    image_response.headers.get("content-type", "image/jpeg"),
+                )
+            },
+        )
+    except httpx.RequestError:
+        return False
     return response.status_code == 200
 
 
 async def _send_media_group(
     client: httpx.AsyncClient, chat_id: int, photo_urls: tuple[str, ...], caption: str | None
 ) -> bool:
-    media: list[dict[str, str]] = [{"type": "photo", "media": url} for url in photo_urls]
+    photos: list[tuple[str, bytes, str]] = []
+    for index, photo_url in enumerate(photo_urls):
+        try:
+            response = await client.get(photo_url)
+        except httpx.RequestError:
+            return False
+        if response.status_code != 200 or not response.content:
+            return False
+        photos.append(
+            (
+                f"listing-{index}.jpg",
+                response.content,
+                response.headers.get("content-type", "image/jpeg"),
+            )
+        )
+
+    media: list[dict[str, str]] = [
+        {"type": "photo", "media": f"attach://photo{index}"}
+        for index in range(len(photos))
+    ]
     if caption is not None:
         media[0].update({"caption": caption, "parse_mode": "HTML"})
-    response = await client.post(
-        _api_url("sendMediaGroup"),
-        data={"chat_id": chat_id, "media": json.dumps(media, ensure_ascii=False)},
-    )
+    files = {
+        f"photo{index}": photo for index, photo in enumerate(photos)
+    }
+    try:
+        response = await client.post(
+            _api_url("sendMediaGroup"),
+            data={
+                "chat_id": chat_id,
+                "media": json.dumps(media, ensure_ascii=False),
+            },
+            files=files,
+        )
+    except httpx.RequestError:
+        return False
     return response.status_code == 200
 
 
@@ -189,7 +235,7 @@ async def send_listing(
     listing: Listing, watch: Watch, *, reason: Literal["new", "pushup"]
 ) -> None:
     caption = _caption(listing, watch, reason=reason)
-    chat_id = settings.telegram_owner_id
+    chat_id = watch.owner_id or settings.telegram_owner_id
     photo_urls = listing.photo_urls or (
         (listing.photo_url,) if listing.photo_url is not None else ()
     )

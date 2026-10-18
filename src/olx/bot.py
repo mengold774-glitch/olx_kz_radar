@@ -17,7 +17,9 @@ from aiogram.types import (
     FSInputFile,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    KeyboardButton,
     Message,
+    ReplyKeyboardMarkup,
     TelegramObject,
 )
 from loguru import logger
@@ -52,11 +54,26 @@ def _kb(rows: list[list[tuple[str, str]]]) -> InlineKeyboardMarkup:
     )
 
 
-class OwnerOnly(BaseMiddleware):
-    """Пропускает владельца и пользователей из списка разрешённых.
+def _main_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=texts.BTN_ADD), KeyboardButton(text=texts.BTN_LIST)],
+            [KeyboardButton(text=texts.BTN_EDIT), KeyboardButton(text=texts.BTN_DELETE)],
+            [KeyboardButton(text=texts.BTN_STATUS), KeyboardButton(text=texts.BTN_PAUSE)],
+            [KeyboardButton(text=texts.BTN_RESUME), KeyboardButton(text=texts.BTN_EXPORT)],
+            [KeyboardButton(text=texts.BTN_HELP)],
+        ],
+        resize_keyboard=True,
+        is_persistent=True,
+        input_field_placeholder="Выберите действие",
+    )
 
-    Чужие сообщения отбрасываются молча: ответ вроде «доступ запрещён» подтверждает,
-    что бот живой и чем-то занят, и превращает случайного прохожего в интересующегося.
+
+class PublicBot(BaseMiddleware):
+    """Пропускает любого пользователя Telegram.
+
+    Запросы изолируются по Telegram ID в базе, поэтому пользователи не видят
+    и не могут менять чужие настройки.
     """
 
     async def __call__(
@@ -66,13 +83,26 @@ class OwnerOnly(BaseMiddleware):
         data: dict[str, Any],
     ) -> Any:
         user = data.get("event_from_user")
-        if user is None or user.id not in settings.allowed_telegram_ids:
-            logger.warning("Отброшено сообщение от чужого id={}", getattr(user, "id", "?"))
+        if user is None:
+            logger.warning("Отброшено событие без пользователя")
             return None
         return await handler(event, data)
 
 
+# Backward-compatible name for integrations importing the old middleware.
+OwnerOnly = PublicBot
+
+
 _fmt_watch = texts.watch_card
+
+
+def _user_id(event: TelegramObject) -> int:
+    user = getattr(event, "from_user", None)
+    return user.id if user is not None else settings.telegram_owner_id
+
+
+def _watches(user_id: int, *, enabled_only: bool = False) -> list[Watch]:
+    return storage.list_watches(enabled_only=enabled_only, owner_id=user_id)
 
 
 async def _step(message: Message, state: FSMContext, title: str, body: str, **kwargs: Any) -> None:
@@ -85,34 +115,36 @@ async def _step(message: Message, state: FSMContext, title: str, body: str, **kw
 
 @router.message(CommandStart())
 async def cmd_start(message: Message) -> None:
-    await message.answer(texts.START.format(commands=texts.COMMANDS))
+    await message.answer(texts.START.format(commands=texts.COMMANDS), reply_markup=_main_keyboard())
 
 
 @router.message(Command("help"))
 async def cmd_help(message: Message) -> None:
     await message.answer(
-        texts.HELP.format(fast=settings.poll_interval_fast, full=settings.poll_interval_full // 60)
+        texts.HELP.format(fast=settings.poll_interval_fast, full=settings.poll_interval_full // 60),
+        reply_markup=_main_keyboard(),
     )
 
 
 @router.message(Command("list"))
 async def cmd_list(message: Message) -> None:
-    await message.answer(texts.watch_list(storage.list_watches(enabled_only=False)))
+    await message.answer(texts.watch_list(_watches(_user_id(message), enabled_only=False)))
 
 
 @router.message(Command("status"))
 async def cmd_status(message: Message) -> None:
     await message.answer(
         texts.status(
-            storage.list_watches(enabled_only=False), fast_interval=settings.poll_interval_fast
+            _watches(_user_id(message), enabled_only=False),
+            fast_interval=settings.poll_interval_fast,
         )
     )
 
 
 @router.message(Command("pause"))
 async def cmd_pause(message: Message) -> None:
-    for w in storage.list_watches(enabled_only=True):
-        storage.update_watch(w.id, enabled=False)
+    for w in _watches(_user_id(message), enabled_only=True):
+        storage.update_watch(w.id, owner_id=_user_id(message), enabled=False)
     await message.answer("Опрос приостановлен. Возобновить: /resume")
 
 
@@ -143,7 +175,7 @@ async def _still_broken(watch: Watch) -> bool:
 
 @router.message(Command("resume"))
 async def cmd_resume(message: Message) -> None:
-    paused = [w for w in storage.list_watches(enabled_only=False) if not w.enabled]
+    paused = [w for w in _watches(_user_id(message)) if not w.enabled]
     if not paused:
         await message.answer("Всё уже в работе.")
         return
@@ -154,7 +186,7 @@ async def cmd_resume(message: Message) -> None:
         (broken if await _still_broken(w) else resumed).append(w)
 
     for w in resumed:
-        storage.update_watch(w.id, enabled=True)
+        storage.update_watch(w.id, owner_id=_user_id(message), enabled=True)
 
     parts = []
     if resumed:
@@ -353,7 +385,7 @@ async def _ask_city(message: Message, state: FSMContext, raw: list[dict]) -> Non
     if majors:
         rows += _pairs(majors)
     rows.append([("✍️ Ввести свой город", "city:manual")])
-    rows.append([("🌍 Вся Украина", "city:any")])
+    rows.append([("🌍 Весь Казахстан", "city:any")])
 
     await state.set_state(Add.city)
     # Числа объявлений по городам не показываем: пробный поиск берёт одну страницу,
@@ -407,7 +439,7 @@ async def _after_city(message: Message, state: FSMContext, chosen: str) -> None:
 async def add_city(call: CallbackQuery, state: FSMContext) -> None:
     value = call.data.split(":", 1)[1]
     if value == "any":
-        chosen = "вся Украина"
+        chosen = "весь Казахстан"
     else:
         await state.update_data(city_id=int(value))
         chosen = geo.city_name(int(value)) or f"город #{value}"
@@ -498,11 +530,12 @@ async def add_notify_mode(call: CallbackQuery, state: FSMContext) -> None:
         owner_type=OwnerType(data["owner_type"]) if data.get("owner_type") else None,
     )
     watch = storage.add_watch(
-        data["query"], filters, PollMode(data.get("poll_mode", "fast")), NotifyMode(notify_mode)
+        data["query"], filters, PollMode(data.get("poll_mode", "fast")), NotifyMode(notify_mode),
+        owner_id=_user_id(call),
     )
     if data.get("stop_words"):
-        storage.update_watch(watch.id, stop_words=data["stop_words"])
-        watch = next(w for w in storage.list_watches(enabled_only=False) if w.id == watch.id)
+        storage.update_watch(watch.id, owner_id=_user_id(call), stop_words=data["stop_words"])
+        watch = next(w for w in _watches(_user_id(call)) if w.id == watch.id)
 
     await call.message.edit_text("Готово.")
     await call.message.answer("Запрос сохранён и уже в очереди опроса:\n\n" + _fmt_watch(watch))
@@ -520,8 +553,8 @@ class Edit(StatesGroup):
     stop_words = FSMState()
 
 
-def _watch_picker(action: str) -> InlineKeyboardMarkup | None:
-    watches = storage.list_watches(enabled_only=False)
+def _watch_picker(action: str, user_id: int) -> InlineKeyboardMarkup | None:
+    watches = _watches(user_id)
     if not watches:
         return None
     return _kb([[(f"#{w.id} — {w.query[:32]}", f"{action}:{w.id}")] for w in watches])
@@ -529,7 +562,7 @@ def _watch_picker(action: str) -> InlineKeyboardMarkup | None:
 
 @router.message(Command("del"))
 async def cmd_del(message: Message) -> None:
-    kb = _watch_picker("delask")
+    kb = _watch_picker("delask", _user_id(message))
     if kb is None:
         await message.answer("Удалять нечего — запросов нет.")
         return
@@ -539,7 +572,7 @@ async def cmd_del(message: Message) -> None:
 @router.callback_query(F.data.startswith("delask:"))
 async def del_confirm(call: CallbackQuery) -> None:
     watch_id = int(call.data.split(":")[1])
-    watch = next((w for w in storage.list_watches(enabled_only=False) if w.id == watch_id), None)
+    watch = next((w for w in _watches(_user_id(call)) if w.id == watch_id), None)
     if watch is None:
         await call.message.edit_text("Этот запрос уже удалён.")
         await call.answer()
@@ -554,7 +587,7 @@ async def del_confirm(call: CallbackQuery) -> None:
 
 @router.callback_query(F.data.startswith("delyes:"))
 async def del_do(call: CallbackQuery) -> None:
-    storage.delete_watch(int(call.data.split(":")[1]))
+    storage.delete_watch(int(call.data.split(":")[1]), owner_id=_user_id(call))
     await call.message.edit_text("Запрос удалён.")
     await call.answer()
 
@@ -567,7 +600,7 @@ async def del_cancel(call: CallbackQuery) -> None:
 
 @router.message(Command("edit"))
 async def cmd_edit(message: Message) -> None:
-    kb = _watch_picker("edit")
+    kb = _watch_picker("edit", _user_id(message))
     if kb is None:
         await message.answer("Менять нечего — запросов нет. Создать: /add")
         return
@@ -577,6 +610,9 @@ async def cmd_edit(message: Message) -> None:
 @router.callback_query(F.data.startswith("edit:"))
 async def edit_menu(call: CallbackQuery) -> None:
     watch_id = int(call.data.split(":")[1])
+    if not any(w.id == watch_id for w in _watches(_user_id(call))):
+        await call.answer("Запрос не найден.", show_alert=True)
+        return
     # Строка запроса, город и раздел не редактируются: менять их -- это, по сути,
     # другой запрос, и накопленная история показов к нему уже не относится. Проще
     # и честнее создать новый через /add.
@@ -599,6 +635,9 @@ async def edit_menu(call: CallbackQuery) -> None:
 async def edit_field(call: CallbackQuery, state: FSMContext) -> None:
     _, raw_id, field = call.data.split(":")
     watch_id = int(raw_id)
+    if not any(w.id == watch_id for w in _watches(_user_id(call))):
+        await call.answer("Запрос не найден.", show_alert=True)
+        return
     await state.update_data(edit_watch_id=watch_id)
 
     if field == "price":
@@ -625,8 +664,8 @@ async def edit_field(call: CallbackQuery, state: FSMContext) -> None:
                               [("Новые + переподнятые", f"es:{watch_id}:notify_mode:new_pushup")]]),
         )
     elif field == "toggle":
-        watch = next(w for w in storage.list_watches(enabled_only=False) if w.id == watch_id)
-        storage.update_watch(watch_id, enabled=not watch.enabled)
+        watch = next(w for w in _watches(_user_id(call)) if w.id == watch_id)
+        storage.update_watch(watch_id, owner_id=_user_id(call), enabled=not watch.enabled)
         await call.message.edit_text(
             "Запрос возобновлён." if not watch.enabled else "Запрос на паузе."
         )
@@ -636,7 +675,7 @@ async def edit_field(call: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data.startswith("es:"))
 async def edit_set(call: CallbackQuery) -> None:
     _, raw_id, field, value = call.data.split(":")
-    watch = storage.update_watch(int(raw_id), **{field: value})
+    watch = storage.update_watch(int(raw_id), owner_id=_user_id(call), **{field: value})
     await call.message.edit_text("Готово.\n\n" + _fmt_watch(watch))
     await call.answer()
 
@@ -649,7 +688,9 @@ async def edit_price_typed(message: Message, state: FSMContext) -> None:
         await message.answer(str(e))
         return
     data = await state.get_data()
-    watch = storage.update_watch(data["edit_watch_id"], price_from=low, price_to=high)
+    watch = storage.update_watch(
+        data["edit_watch_id"], owner_id=_user_id(message), price_from=low, price_to=high
+    )
     await state.clear()
     await message.answer("Готово.\n\n" + _fmt_watch(watch))
 
@@ -658,7 +699,8 @@ async def edit_price_typed(message: Message, state: FSMContext) -> None:
 async def edit_stop_words_typed(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
     watch = storage.update_watch(
-        data["edit_watch_id"], stop_words=wizard.parse_stop_words(message.text or "")
+        data["edit_watch_id"], owner_id=_user_id(message),
+        stop_words=wizard.parse_stop_words(message.text or "")
     )
     await state.clear()
     await message.answer("Готово.\n\n" + _fmt_watch(watch))
@@ -666,7 +708,7 @@ async def edit_stop_words_typed(message: Message, state: FSMContext) -> None:
 
 @router.message(Command("export"))
 async def cmd_export(message: Message) -> None:
-    watches = storage.list_watches(enabled_only=False)
+    watches = _watches(_user_id(message))
     rows = [[(f"#{w.id} — {w.query[:32]}", f"exp:{w.id}")] for w in watches]
     rows.append([("Все объявления", "exp:all")])
     await message.answer("Что выгружаем?", reply_markup=_kb(rows))
@@ -677,6 +719,11 @@ async def export_pick_format(call: CallbackQuery) -> None:
     # Идентификатор запроса едет прямо в callback_data следующего шага, а не через
     # FSMContext -- тот же приём, что у ef:/es: выше: короче и не текает между шагами.
     watch_ref = call.data.split(":", 1)[1]
+    if watch_ref != "all" and not any(
+        w.id == int(watch_ref) for w in _watches(_user_id(call))
+    ):
+        await call.answer("Запрос не найден.", show_alert=True)
+        return
     await call.message.edit_text(
         "В каком формате?",
         reply_markup=_kb(
@@ -690,15 +737,65 @@ async def export_pick_format(call: CallbackQuery) -> None:
 async def export_send(call: CallbackQuery) -> None:
     _, watch_ref, fmt = call.data.split(":")
     watch_id = None if watch_ref == "all" else int(watch_ref)
-    path = storage.export(fmt, watch_id)
+    if watch_id is not None and not any(
+        w.id == watch_id for w in _watches(_user_id(call))
+    ):
+        await call.answer("Запрос не найден.", show_alert=True)
+        return
+    path = storage.export(fmt, watch_id, owner_id=_user_id(call))
     await call.message.edit_text("Готово, отправляю файл…")
     await call.message.answer_document(FSInputFile(path))
     await call.answer()
 
 
+@router.message(F.text == texts.BTN_ADD)
+async def button_add(message: Message, state: FSMContext) -> None:
+    await cmd_add(message, state)
+
+
+@router.message(F.text == texts.BTN_LIST)
+async def button_list(message: Message) -> None:
+    await cmd_list(message)
+
+
+@router.message(F.text == texts.BTN_EDIT)
+async def button_edit(message: Message) -> None:
+    await cmd_edit(message)
+
+
+@router.message(F.text == texts.BTN_DELETE)
+async def button_delete(message: Message) -> None:
+    await cmd_del(message)
+
+
+@router.message(F.text == texts.BTN_STATUS)
+async def button_status(message: Message) -> None:
+    await cmd_status(message)
+
+
+@router.message(F.text == texts.BTN_PAUSE)
+async def button_pause(message: Message) -> None:
+    await cmd_pause(message)
+
+
+@router.message(F.text == texts.BTN_RESUME)
+async def button_resume(message: Message) -> None:
+    await cmd_resume(message)
+
+
+@router.message(F.text == texts.BTN_EXPORT)
+async def button_export(message: Message) -> None:
+    await cmd_export(message)
+
+
+@router.message(F.text == texts.BTN_HELP)
+async def button_help(message: Message) -> None:
+    await cmd_help(message)
+
+
 def build_dispatcher() -> Dispatcher:
     dp = Dispatcher()
-    dp.update.outer_middleware(OwnerOnly())
+    dp.update.outer_middleware(PublicBot())
     dp.include_router(router)
     return dp
 

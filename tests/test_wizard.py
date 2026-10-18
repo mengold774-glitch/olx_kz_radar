@@ -129,12 +129,28 @@ def test_price_presets_skipped_when_all_prices_are_equal():
 def test_major_cities_resolve_from_directory():
     majors = dict((name, cid) for cid, name in geo.major_cities())
     assert majors["Алматы"] == 1
+    assert majors["Өскемен"] == 52
+    assert majors["Орал"] == 19
     assert len(majors) >= 10
 
 
 def test_find_city_prefers_prefix_matches():
     got = geo.find_cities("Алматы")
     assert got and got[0][1] == "Алматы"
+
+
+@pytest.mark.parametrize(
+    "old_name, current_name",
+    [
+        ("Усть-Каменогорск", "Өскемен"),
+        ("Зыряновск", "Алтай"),
+        ("Жетысай", "Жетісай"),
+        ("Уральск", "Орал"),
+    ],
+)
+def test_find_city_accepts_previous_official_names(old_name, current_name):
+    got = geo.find_cities(old_name)
+    assert got and got[0][1] == current_name
 
 
 def test_find_city_is_case_insensitive():

@@ -15,7 +15,7 @@
  },
  "4": {
   "id": 4,
-  "name": "Жетысай",
+  "name": "Жетісай",
   "normalized_name": "jetysay",
   "region_id": 6,
   "region_name": "Туркестанская область"
@@ -50,8 +50,8 @@
  },
  "19": {
   "id": 19,
-  "name": "Уральск",
-  "normalized_name": "uralsk",
+  "name": "Орал",
+  "normalized_name": "oral",
   "region_id": 7,
   "region_name": "Западно-Казахстанская область"
  },
@@ -171,8 +171,8 @@
   "id": 50,
   "name": "Актау",
   "normalized_name": "aktau",
-  "region_id": 7,
-  "region_name": "Западно-Казахстанская область"
+  "region_id": 9,
+  "region_name": "Мангистауская область"
  },
  "51": {
   "id": 51,
@@ -183,8 +183,8 @@
  },
  "52": {
   "id": 52,
-  "name": "Усть-Каменогорск",
-  "normalized_name": "ust-kamenogorsk",
+  "name": "Өскемен",
+  "normalized_name": "oskemen",
   "region_id": 14,
   "region_name": "Восточно-Казахстанская область"
  },
@@ -197,8 +197,8 @@
  },
  "55": {
   "id": 55,
-  "name": "Зыряновск",
-  "normalized_name": "zyryanovsk",
+  "name": "Алтай",
+  "normalized_name": "altay",
   "region_id": 14,
   "region_name": "Восточно-Казахстанская область"
  },
@@ -220,8 +220,8 @@
   "id": 58,
   "name": "Семей",
   "normalized_name": "semey",
-  "region_id": 14,
-  "region_name": "Восточно-Казахстанская область"
+  "region_id": 15,
+  "region_name": "Абайская область"
  },
  "59": {
   "id": 59,
@@ -325,8 +325,8 @@
   "id": 87,
   "name": "Астана",
   "normalized_name": "astana",
-  "region_id": 13,
-  "region_name": "Акмолинская область"
+  "region_id": 17,
+  "region_name": "город Астана"
  },
  "137": {
   "id": 137,

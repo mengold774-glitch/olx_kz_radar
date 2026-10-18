@@ -11,8 +11,18 @@ CITIES_PATH = Path(__file__).resolve().parents[2] / "data" / "reference" / "olx-
 # «крупный город» -- это про население, а справочник OLX его не знает.
 MAJOR_CITY_NAMES = (
     "Алматы", "Астана", "Шымкент", "Караганда", "Актобе", "Тараз",
-    "Павлодар", "Өскемен", "Уральск", "Кызылорда", "Костанай", "Актау",
+    "Павлодар", "Өскемен", "Орал", "Кызылорда", "Костанай", "Актау",
 )
+
+# OLX can return names that were changed officially. Keep old names searchable
+# after the directory is updated to the current spelling.
+CITY_ALIASES = {
+    "усть-каменогорск": "өскемен",
+    "zyryanovsk": "алтай",
+    "зыряновск": "алтай",
+    "жетысай": "жетісай",
+    "уральск": "орал",
+}
 
 
 @lru_cache(maxsize=1)
@@ -45,7 +55,8 @@ def find_cities(text: str, *, limit: int = 8) -> list[tuple[int, str]]:
     for city in _cities().values():
         name = city["name"]
         folded = name.casefold()
-        if folded.startswith(needle):
+        alias = CITY_ALIASES.get(needle)
+        if folded.startswith(needle) or (alias and folded.startswith(alias)):
             starts.append((city["id"], name))
         elif needle in folded or needle in (city.get("normalized_name") or ""):
             contains.append((city["id"], name))

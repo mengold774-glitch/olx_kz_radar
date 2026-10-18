@@ -110,8 +110,8 @@ async def test_ac8_survives_three_blocks_and_recovers(
 
     await monitor._cycle(poller)
 
-    # Восстановление доказывается не уведомлениями (первый удачный опрос -- посевной
-    # и молчит по замыслу), а тем, что счётчик сброшен и выдача реально осела в БД.
+    # Восстановление доказывается тем, что счётчик сброшен и выдача реально осела
+    # в БД.
     assert poller.failures == 0
     assert len(storage.seen_ids(watch.id)) == 52
 
@@ -143,13 +143,15 @@ async def test_transport_error_does_not_pause_watch(watch, sent, no_sleep, monke
 
 
 @pytest.mark.asyncio
-async def test_first_poll_seeds_silently(watch, sent, no_sleep, sample_response, monkeypatch):
-    """Создание запроса не должно выливаться в пачку уведомлений о том, что уже висит."""
+async def test_first_poll_notifies_current_listings(
+    watch, sent, no_sleep, sample_response, monkeypatch
+):
+    """Первый опрос сразу отправляет текущие подходящие объявления."""
     monkeypatch.setattr(monitor.api, "search_raw", lambda *a, **kw: sample_response)
 
     await monitor._cycle(Poller(proxies=[]))
 
-    assert sent["listings"] == []
+    assert len(sent["listings"]) == 52
     assert len(storage.seen_ids(watch.id)) == 52
 
 
@@ -163,7 +165,7 @@ def _make_due(watch_id: int) -> None:
 
 
 @pytest.mark.asyncio
-async def test_only_listings_added_after_seeding_are_notified(
+async def test_only_listings_added_after_first_poll_are_notified(
     watch, sent, no_sleep, sample_response, monkeypatch
 ):
     responses = [sample_response]
@@ -171,7 +173,7 @@ async def test_only_listings_added_after_seeding_are_notified(
     poller = Poller(proxies=[])
 
     await monitor._cycle(poller)
-    assert sent["listings"] == []
+    assert len(sent["listings"]) == 52
 
     fresh = json.loads(json.dumps(sample_response["data"][0]))
     fresh["id"] = 999_000_001
@@ -181,11 +183,12 @@ async def test_only_listings_added_after_seeding_are_notified(
 
     _make_due(watch.id)
     await monitor._cycle(poller)
-    assert [lid for lid, _ in sent["listings"]] == [999_000_001]
+    assert sent["listings"][-1][0] == 999_000_001
+    assert len(sent["listings"]) == 53
 
     _make_due(watch.id)
     await monitor._cycle(poller)
-    assert [lid for lid, _ in sent["listings"]] == [999_000_001]
+    assert len(sent["listings"]) == 53
 
 
 def test_asyncio_is_reachable_for_patching():

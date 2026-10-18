@@ -85,3 +85,4 @@ class Watch:
     created_at: datetime | None = None
     last_polled_at: datetime | None = None
     last_found_at: datetime | None = None
+    owner_id: int = 0

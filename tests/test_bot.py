@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from olx import bot, storage, texts
-from olx.bot import OwnerOnly, _fmt_watch, build_dispatcher
+from olx.bot import OwnerOnly, _fmt_watch, _main_keyboard, build_dispatcher
 from olx.config import settings
 from olx.models import Filters, NotifyMode, PollMode
 
@@ -21,30 +21,45 @@ async def _handler(event, data):
 
 
 @pytest.mark.asyncio
-async def test_owner_passes():
+async def test_user_passes():
     mw = OwnerOnly()
     data = {"event_from_user": _User(settings.telegram_owner_id)}
     assert await mw(_handler, object(), data) == "handled"
 
 
 @pytest.mark.asyncio
-async def test_stranger_is_dropped_silently():
+async def test_any_user_passes():
     mw = OwnerOnly()
     for user in (_User(1), _User(settings.telegram_owner_id + 1), None):
         data = {"event_from_user": user}
-        assert await mw(_handler, object(), data) is None
+        expected = "handled" if user is not None else None
+        assert await mw(_handler, object(), data) == expected
 
 
 @pytest.mark.asyncio
-async def test_allowed_friend_passes(monkeypatch):
+async def test_any_user_does_not_need_allowlist(monkeypatch):
     mw = OwnerOnly()
-    monkeypatch.setattr(settings, "telegram_allowed_ids", "42")
     data = {"event_from_user": _User(42)}
     assert await mw(_handler, object(), data) == "handled"
 
 
 def test_dispatcher_builds():
     assert build_dispatcher() is not None
+
+
+def test_main_keyboard_contains_management_actions():
+    labels = [button.text for row in _main_keyboard().keyboard for button in row]
+    assert labels == [
+        texts.BTN_ADD,
+        texts.BTN_LIST,
+        texts.BTN_EDIT,
+        texts.BTN_DELETE,
+        texts.BTN_STATUS,
+        texts.BTN_PAUSE,
+        texts.BTN_RESUME,
+        texts.BTN_EXPORT,
+        texts.BTN_HELP,
+    ]
 
 
 def test_bot_renders_cards_through_the_texts_module():

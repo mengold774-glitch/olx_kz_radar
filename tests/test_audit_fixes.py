@@ -212,7 +212,7 @@ async def test_broken_format_pauses_watch_and_alerts(db, sent, no_sleep, monkeyp
     assert watch.id
 
 
-# --- T-24: посев не сгорает на пустой выдаче ----------------------------------
+# --- T-24: первый опрос повторяется после пустой выдачи ----------------------
 
 
 @pytest.mark.asyncio
@@ -226,8 +226,8 @@ async def test_empty_first_poll_does_not_consume_seeding(db, sample, sent, no_sl
     monkeypatch.setattr(monitor.api, "search_raw", lambda *a, **kw: sample)
     await monitor._cycle(Poller(proxies=[]))
 
-    # Второй опрос — всё ещё посевной, а не пачка из 52 уведомлений.
-    assert sent["listings"] == []
+    # После пустого ответа следующий первый результат сразу отправляется.
+    assert len(sent["listings"]) == 52
     assert len(storage.seen_ids(watch.id)) == 52
 
 

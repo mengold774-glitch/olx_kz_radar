@@ -164,12 +164,16 @@ def poll_once(watch: Watch, *, proxy: str | None = None) -> list[Find]:
         )
     listings = apply_stop_words(listings, watch.stop_words)
 
-    # Первый опрос посевной: «новое» значит «появилось после того, как я начал
-    # следить», а не «вижу впервые».
+    # Первый опрос сразу отправляет текущую выдачу: пользователь должен увидеть
+    # найденные объявления, а не только получить их позже через /export.
     seeding = watch.last_polled_at is None
-    finds = [] if seeding else select_new(watch, listings)
+    finds = (
+        [Find(listing, "new") for listing in listings]
+        if seeding
+        else select_new(watch, listings)
+    )
     if seeding:
-        logger.info("Запрос #{}: посев, запомнено {} объявлений", watch.id, len(listings))
+        logger.info("Запрос #{}: первый опрос, отправляю {} объявлений", watch.id, len(listings))
 
     for lst in listings:
         storage.upsert_listing(lst)
@@ -183,10 +187,10 @@ def poll_once(watch: Watch, *, proxy: str | None = None) -> list[Find]:
         if lst.id not in pending:
             storage.mark_seen(watch.id, lst)
 
-    # Пустая выдача не должна сжигать посев: иначе следующий опрос выплюнет
-    # всю выдачу разом.
+    # Пустая выдача не должна завершать первый опрос: иначе объявления из
+    # следующего непустого ответа могут быть ошибочно пропущены.
     if seeding and not listings:
-        logger.warning("Запрос #{}: посев на пустой выдаче, повторю в следующий раз", watch.id)
+        logger.warning("Запрос #{}: первый опрос с пустой выдачей, повторю", watch.id)
         return finds
 
     now = datetime.now(UTC)

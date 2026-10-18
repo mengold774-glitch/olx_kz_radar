@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from olx import categories
+from olx.config import settings
 from olx.errors import StorageError
 from olx.models import Filters, Listing, NotifyMode, OwnerType, PollMode, State, Watch
 
@@ -25,6 +26,7 @@ EXPORTS_DIR = Path(__file__).resolve().parents[2] / "data" / "exports"
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS watches (
     id              INTEGER PRIMARY KEY,
+    owner_id        INTEGER NOT NULL DEFAULT 0,
     query           TEXT    NOT NULL,
     price_from      INTEGER,
     price_to        INTEGER,
@@ -92,6 +94,12 @@ def init_db(path: Path) -> None:
     conn = sqlite3.connect(path)
     try:
         conn.executescript(_SCHEMA)
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(watches)")}
+        if "owner_id" not in columns:
+            conn.execute("ALTER TABLE watches ADD COLUMN owner_id INTEGER NOT NULL DEFAULT 0")
+        conn.execute(
+            "UPDATE watches SET owner_id = ? WHERE owner_id = 0", (settings.telegram_owner_id,)
+        )
         conn.commit()
     finally:
         conn.close()
@@ -145,21 +153,31 @@ def _row_to_watch(row: sqlite3.Row) -> Watch:
         created_at=datetime.fromisoformat(row["created_at"]),
         last_polled_at=_opt_datetime(row["last_polled_at"]),
         last_found_at=_opt_datetime(row["last_found_at"]),
+        owner_id=row["owner_id"],
     )
 
 
-def add_watch(query: str, filters: Filters, poll_mode: PollMode, notify_mode: NotifyMode) -> Watch:
+def add_watch(
+    query: str,
+    filters: Filters,
+    poll_mode: PollMode,
+    notify_mode: NotifyMode,
+    *,
+    owner_id: int | None = None,
+) -> Watch:
     # stop_words и city_name сюда намеренно не входят: Filters их не несёт (контракты,
     # раздел Watch), а city_name сейчас некому заполнить -- город известен только по
     # id (S-05, открытый вопрос 1). Оба дополняются позже через update_watch().
     with _connection() as conn:
+        owner_id = settings.telegram_owner_id if owner_id is None else owner_id
         cur = conn.execute(
             """
-            INSERT INTO watches (query, price_from, price_to, city_id, category_id, state,
-                                  owner_type, poll_mode, notify_mode, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO watches (owner_id, query, price_from, price_to, city_id, category_id,
+                                  state, owner_type, poll_mode, notify_mode, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
+                owner_id,
                 query,
                 filters.price_from,
                 filters.price_to,
@@ -177,19 +195,26 @@ def add_watch(query: str, filters: Filters, poll_mode: PollMode, notify_mode: No
     return _row_to_watch(row)
 
 
-def list_watches(*, enabled_only: bool = True) -> list[Watch]:
+def list_watches(*, enabled_only: bool = True, owner_id: int | None = None) -> list[Watch]:
     sql = "SELECT * FROM watches"
+    params: list[Any] = []
+    if owner_id is not None:
+        sql += " WHERE owner_id = ?"
+        params.append(owner_id)
     if enabled_only:
-        sql += " WHERE enabled = 1"
+        sql += " AND enabled = 1" if params else " WHERE enabled = 1"
     sql += " ORDER BY id"
     with _connection() as conn:
-        rows = conn.execute(sql).fetchall()
+        rows = conn.execute(sql, params).fetchall()
     return [_row_to_watch(row) for row in rows]
 
 
-def delete_watch(watch_id: int) -> None:
+def delete_watch(watch_id: int, *, owner_id: int | None = None) -> None:
     with _connection() as conn:
-        conn.execute("DELETE FROM watches WHERE id = ?", (watch_id,))
+        if owner_id is None:
+            conn.execute("DELETE FROM watches WHERE id = ?", (watch_id,))
+        else:
+            conn.execute("DELETE FROM watches WHERE id = ? AND owner_id = ?", (watch_id, owner_id))
         conn.commit()
 
 
@@ -215,7 +240,7 @@ def _serialize_watch_field(name: str, value: Any) -> Any:
     return value
 
 
-def update_watch(watch_id: int, **fields: Any) -> Watch:
+def update_watch(watch_id: int, *, owner_id: int | None = None, **fields: Any) -> Watch:
     unknown = set(fields) - _WATCH_COLUMNS
     if unknown:
         raise ValueError(f"update_watch: неизвестные поля {sorted(unknown)}")
@@ -223,9 +248,21 @@ def update_watch(watch_id: int, **fields: Any) -> Watch:
         if fields:
             assignments = ", ".join(f"{name} = ?" for name in fields)
             values = [_serialize_watch_field(name, value) for name, value in fields.items()]
-            conn.execute(f"UPDATE watches SET {assignments} WHERE id = ?", (*values, watch_id))
+            where = "id = ?"
+            where_values: tuple[Any, ...] = (watch_id,)
+            if owner_id is not None:
+                where += " AND owner_id = ?"
+                where_values += (owner_id,)
+            conn.execute(
+                f"UPDATE watches SET {assignments} WHERE {where}", (*values, *where_values)
+            )
             conn.commit()
-        row = conn.execute("SELECT * FROM watches WHERE id = ?", (watch_id,)).fetchone()
+        where = "id = ?"
+        where_values = (watch_id,)
+        if owner_id is not None:
+            where += " AND owner_id = ?"
+            where_values += (owner_id,)
+        row = conn.execute(f"SELECT * FROM watches WHERE {where}", where_values).fetchone()
     if row is None:
         raise ValueError(f"watch {watch_id} не найден")
     return _row_to_watch(row)
@@ -368,7 +405,7 @@ _LATEST_PRICE_ID = """
 """
 
 
-def _export_rows(watch_id: int | None) -> list[dict[str, Any]]:
+def _export_rows(watch_id: int | None, owner_id: int | None = None) -> list[dict[str, Any]]:
     # watch_id задан -- берём watch_seen.first_seen_at: это "когда эту вещь увидел
     # именно этот запрос", а не listings.first_seen_at, который мог набежать раньше
     # от другого запроса на ту же вещь (дедуп в contracts.md намеренно попарный).
@@ -378,19 +415,33 @@ def _export_rows(watch_id: int | None) -> list[dict[str, Any]]:
                    ws.first_seen_at, p.price, p.currency
             FROM listings l
             JOIN watch_seen ws ON ws.listing_id = l.id AND ws.watch_id = ?
+            JOIN watches w ON w.id = ws.watch_id
+                {"AND w.owner_id = ?" if owner_id is not None else ""}
             LEFT JOIN price_snapshots p ON p.id = {_LATEST_PRICE_ID}
             ORDER BY l.id
         """
-        params: tuple[Any, ...] = (watch_id,)
+        params = (watch_id,) if owner_id is None else (watch_id, owner_id)
     else:
-        sql = f"""
-            SELECT l.id, l.url, l.title, l.city_name, l.category_id, l.business, l.created_at,
-                   l.first_seen_at, p.price, p.currency
-            FROM listings l
-            LEFT JOIN price_snapshots p ON p.id = {_LATEST_PRICE_ID}
-            ORDER BY l.id
-        """
-        params = ()
+        if owner_id is None:
+            sql = f"""
+                SELECT l.id, l.url, l.title, l.city_name, l.category_id, l.business, l.created_at,
+                       l.first_seen_at, p.price, p.currency
+                FROM listings l
+                LEFT JOIN price_snapshots p ON p.id = {_LATEST_PRICE_ID}
+                ORDER BY l.id
+            """
+            params = ()
+        else:
+            sql = f"""
+                SELECT DISTINCT l.id, l.url, l.title, l.city_name, l.category_id, l.business,
+                       l.created_at, l.first_seen_at, p.price, p.currency
+                FROM listings l
+                JOIN watch_seen ws ON ws.listing_id = l.id
+                JOIN watches w ON w.id = ws.watch_id AND w.owner_id = ?
+                LEFT JOIN price_snapshots p ON p.id = {_LATEST_PRICE_ID}
+                ORDER BY l.id
+            """
+            params = (owner_id,)
     with _connection() as conn:
         rows = conn.execute(sql, params).fetchall()
     return [
@@ -426,8 +477,10 @@ def _write_json(path: Path, rows: list[dict[str, Any]]) -> None:
     path.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def export(fmt: Literal["csv", "json"], watch_id: int | None = None) -> Path:
-    rows = _export_rows(watch_id)
+def export(
+    fmt: Literal["csv", "json"], watch_id: int | None = None, *, owner_id: int | None = None
+) -> Path:
+    rows = _export_rows(watch_id, owner_id)
     EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
     scope = f"watch{watch_id}" if watch_id is not None else "all"
     stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
