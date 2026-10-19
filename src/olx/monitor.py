@@ -220,6 +220,7 @@ async def _deliver(finds: list[Find], watch: Watch) -> None:
                 "Не отправилось объявление {}: {}: {}", find.listing.id, type(e).__name__, e
             )
             continue
+        storage.upsert_listing(find.listing)
         storage.mark_seen(watch.id, find.listing)
         # Пачка вплотную ловит от Telegram 429 и теряет хвост.
         if index + 1 < len(finds):
