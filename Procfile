@@ -1,1 +1,1 @@
-worker: python -m olx
+worker: PYTHONPATH=src python -m olx
