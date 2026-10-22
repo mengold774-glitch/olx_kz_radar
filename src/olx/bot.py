@@ -147,7 +147,7 @@ async def cmd_stats(message: Message) -> None:
     if message.from_user.id != settings.telegram_owner_id:
         await message.answer("Команда доступна только владельцу.")
         return
-    await message.answer(f"Пользователей бота: {storage.count_users()}")
+    await message.answer(f"Пользователей бота: {storage.count_users()}", parse_mode=None)
 
 
 @router.message(Command("pause"))
