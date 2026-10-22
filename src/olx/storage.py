@@ -523,11 +523,7 @@ def purge_old_history(*, retention_days: int, now: datetime | None = None) -> di
         stale = [
             row["id"]
             for row in conn.execute(
-CREATE TABLE IF NOT EXISTS users (
-    telegram_id INTEGER PRIMARY KEY,
-    first_seen_at TEXT NOT NULL
-);
-"""
+                """
                 SELECT l.id FROM listings l
                 WHERE (SELECT MAX(ws.notified_at) FROM watch_seen ws
                        WHERE ws.listing_id = l.id) < ?
