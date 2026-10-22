@@ -2,6 +2,7 @@
 
 import csv
 import json
+import os
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -15,15 +16,9 @@ from olx.config import settings
 from olx.errors import StorageError
 from olx.models import Filters, Listing, NotifyMode, OwnerType, PollMode, State, Watch
 
-# Не data/olx.db -- выгрузки одноразовые файлы для владельца, держать их рядом
-# с боевой БД незачем, а чистить их отдельно от бэкапов БД удобнее.
 EXPORTS_DIR = Path(__file__).resolve().parents[2] / "data" / "exports"
 
-# Схема дословно из контрактов (docs/pipeline/contracts.md, раздел 2).
-# IF NOT EXISTS добавлен относительно контракта: init_db() вызывается при каждом
-# старте демона на постоянный data/olx.db, а не только один раз при разворачивании --
-# без него второй запуск падал бы на "table already exists".
-_SCHEMA = """
+_SCHEMASQLITE = """
 CREATE TABLE IF NOT EXISTS watches (
     id              INTEGER PRIMARY KEY,
     owner_id        INTEGER NOT NULL DEFAULT 0,
@@ -35,7 +30,6 @@ CREATE TABLE IF NOT EXISTS watches (
     category_id     INTEGER,
     state           TEXT,
     owner_type      TEXT,
-    -- stop_words: JSON-массив; отдельная таблица избыточна при 1-5 запросах
     stop_words      TEXT    NOT NULL DEFAULT '[]',
     poll_mode       TEXT    NOT NULL DEFAULT 'fast',
     notify_mode     TEXT    NOT NULL DEFAULT 'new',
@@ -46,7 +40,7 @@ CREATE TABLE IF NOT EXISTS watches (
 );
 
 CREATE TABLE IF NOT EXISTS listings (
-    id            INTEGER PRIMARY KEY,      -- id объявления OLX
+    id            INTEGER PRIMARY KEY,
     url           TEXT NOT NULL,
     title         TEXT NOT NULL,
     city_id       INTEGER,
@@ -87,69 +81,194 @@ CREATE TABLE IF NOT EXISTS users (
 );
 """
 
-# Публичные функции не принимают connection/path (см. сигнатуры в контрактах) --
-# единственный способ их связать без протаскивания параметра через весь модуль.
+_SCHEMAPG = """
+CREATE TABLE IF NOT EXISTS watches (
+    id              SERIAL PRIMARY KEY,
+    owner_id        INTEGER NOT NULL DEFAULT 0,
+    query           TEXT    NOT NULL,
+    price_from      INTEGER,
+    price_to        INTEGER,
+    city_id         INTEGER,
+    city_name       TEXT,
+    category_id     INTEGER,
+    state           TEXT,
+    owner_type      TEXT,
+    stop_words      TEXT    NOT NULL DEFAULT '[]',
+    poll_mode       TEXT    NOT NULL DEFAULT 'fast',
+    notify_mode     TEXT    NOT NULL DEFAULT 'new',
+    enabled         INTEGER NOT NULL DEFAULT 1,
+    created_at      TEXT    NOT NULL,
+    last_polled_at  TEXT,
+    last_found_at   TEXT
+);
+
+CREATE TABLE IF NOT EXISTS listings (
+    id            INTEGER PRIMARY KEY,
+    url           TEXT NOT NULL,
+    title         TEXT NOT NULL,
+    city_id       INTEGER,
+    city_name     TEXT,
+    region_id     INTEGER,
+    business      INTEGER NOT NULL,
+    state         TEXT,
+    category_id   INTEGER,
+    seller_id     INTEGER,
+    seller_name   TEXT,
+    photo_url     TEXT,
+    created_at    TEXT NOT NULL,
+    first_seen_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS price_snapshots (
+    id         SERIAL PRIMARY KEY,
+    listing_id INTEGER NOT NULL REFERENCES listings(id),
+    price      INTEGER,
+    currency   TEXT,
+    negotiable INTEGER NOT NULL DEFAULT 0,
+    seen_at    TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_snap_listing ON price_snapshots(listing_id, seen_at);
+
+CREATE TABLE IF NOT EXISTS watch_seen (
+    watch_id       INTEGER NOT NULL REFERENCES watches(id) ON DELETE CASCADE,
+    listing_id     INTEGER NOT NULL REFERENCES listings(id),
+    first_seen_at  TEXT    NOT NULL,
+    last_pushup_at TEXT,
+    notified_at    TEXT,
+    PRIMARY KEY (watch_id, listing_id)
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    telegram_id INTEGER PRIMARY KEY,
+    first_seen_at TEXT NOT NULL
+);
+"""
+
 _db_path: Path | None = None
+_pg_conn = None
+
+
+def _use_pg() -> bool:
+    return bool(settings.database_url)
 
 
 def init_db(path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    global _db_path
-    _db_path = path
-    conn = sqlite3.connect(path)
-    try:
-        conn.executescript(_SCHEMA)
-        columns = {row[1] for row in conn.execute("PRAGMA table_info(watches)")}
-        if "owner_id" not in columns:
-            conn.execute("ALTER TABLE watches ADD COLUMN owner_id INTEGER NOT NULL DEFAULT 0")
-        conn.execute(
-            "UPDATE watches SET owner_id = ? WHERE owner_id = 0", (settings.telegram_owner_id,)
-        )
-        conn.commit()
-    finally:
-        conn.close()
+    global _db_path, _pg_conn
+    if _use_pg():
+        import psycopg2
+
+        _pg_conn = psycopg2.connect(settings.database_url)
+        _pg_conn.autocommit = True
+        with _pg_conn.cursor() as cur:
+            for stmt in _SCHEMAPG.split(";"):
+                stmt = stmt.strip()
+                if stmt:
+                    cur.execute(stmt)
+        # migration: add owner_id if missing
+        with _pg_conn.cursor() as cur:
+            cur.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='watches' AND column_name='owner_id'"
+            )
+            if not cur.fetchone():
+                cur.execute("ALTER TABLE watches ADD COLUMN owner_id INTEGER NOT NULL DEFAULT 0")
+                cur.execute("UPDATE watches SET owner_id = %s WHERE owner_id = 0", (settings.telegram_owner_id,))
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _db_path = path
+        conn = sqlite3.connect(path)
+        try:
+            conn.executescript(_SCHEMASQLITE)
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(watches)")}
+            if "owner_id" not in columns:
+                conn.execute("ALTER TABLE watches ADD COLUMN owner_id INTEGER NOT NULL DEFAULT 0")
+            conn.execute(
+                "UPDATE watches SET owner_id = ? WHERE owner_id = 0", (settings.telegram_owner_id,)
+            )
+            conn.commit()
+        finally:
+            conn.close()
 
 
 @contextmanager
-def _connection() -> Iterator[sqlite3.Connection]:
-    if _db_path is None:
-        raise StorageError("storage.init_db() ещё не вызван")
-    try:
-        conn = sqlite3.connect(_db_path, timeout=30.0)
-        conn.execute("PRAGMA journal_mode = WAL")
-    except sqlite3.Error as e:
-        raise StorageError(f"БД недоступна: {e}") from e
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    try:
-        yield conn
-    except sqlite3.Error as e:
-        conn.rollback()
-        raise StorageError(f"Ошибка БД: {e}") from e
-    finally:
-        conn.close()
+def _connection() -> Iterator[Any]:
+    if _use_pg():
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+
+        conn = psycopg2.connect(settings.database_url)
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                yield _PgConnWrapper(conn, cur)
+        finally:
+            conn.close()
+    else:
+        if _db_path is None:
+            raise StorageError("storage.init_db() ещё не вызван")
+        try:
+            conn = sqlite3.connect(_db_path, timeout=30.0)
+            conn.execute("PRAGMA journal_mode = WAL")
+        except sqlite3.Error as e:
+            raise StorageError(f"БД недоступна: {e}") from e
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            yield conn
+        except sqlite3.Error as e:
+            conn.rollback()
+            raise StorageError(f"Ошибка БД: {e}") from e
+        finally:
+            conn.close()
 
 
-def track_user(telegram_id: int) -> None:
-    with _connection() as conn:
-        conn.execute(
-            "INSERT OR IGNORE INTO users (telegram_id, first_seen_at) VALUES (?, ?)",
-            (telegram_id, datetime.now(UTC).isoformat()),
-        )
-        conn.commit()
+class _PgConnWrapper:
+    """Wraps a PG connection+cursor to look like a sqlite3 connection for our code."""
+
+    def __init__(self, conn, cur):
+        self._conn = conn
+        self._cur = cur
+
+    def execute(self, sql, params=()):
+        sql = sql.replace("?", "%s")
+        self._cur.execute(sql, params)
+        return self._cur
+
+    def executescript(self, sql):
+        for stmt in sql.split(";"):
+            stmt = stmt.strip()
+            if stmt:
+                self._cur.execute(stmt)
+
+    def executemany(self, sql, params_seq):
+        sql = sql.replace("?", "%s")
+        self._cur.executemany(sql, params_seq)
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._cur.close()
+        self._conn.close()
+
+    @property
+    def row_factory(self):
+        return None
+
+    @row_factory.setter
+    def row_factory(self, v):
+        pass
 
 
-def count_users() -> int:
-    with _connection() as conn:
-        row = conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()
-    return int(row["c"])
+def _opt_datetime(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value
+    return datetime.fromisoformat(value)
 
 
-def _opt_datetime(value: str | None) -> datetime | None:
-    return datetime.fromisoformat(value) if value else None
-
-
-def _row_to_watch(row: sqlite3.Row) -> Watch:
+def _row_to_watch(row) -> Watch:
     filters = Filters(
         price_from=row["price_from"],
         price_to=row["price_to"],
@@ -166,7 +285,7 @@ def _row_to_watch(row: sqlite3.Row) -> Watch:
         poll_mode=PollMode(row["poll_mode"]),
         notify_mode=NotifyMode(row["notify_mode"]),
         enabled=bool(row["enabled"]),
-        created_at=datetime.fromisoformat(row["created_at"]),
+        created_at=_opt_datetime(row["created_at"]) or datetime.now(UTC),
         last_polled_at=_opt_datetime(row["last_polled_at"]),
         last_found_at=_opt_datetime(row["last_found_at"]),
         owner_id=row["owner_id"],
@@ -181,9 +300,6 @@ def add_watch(
     *,
     owner_id: int | None = None,
 ) -> Watch:
-    # stop_words и city_name сюда намеренно не входят: Filters их не несёт (контракты,
-    # раздел Watch), а city_name сейчас некому заполнить -- город известен только по
-    # id (S-05, открытый вопрос 1). Оба дополняются позже через update_watch().
     with _connection() as conn:
         owner_id = settings.telegram_owner_id if owner_id is None else owner_id
         cur = conn.execute(
@@ -191,6 +307,7 @@ def add_watch(
             INSERT INTO watches (owner_id, query, price_from, price_to, city_id, category_id,
                                   state, owner_type, poll_mode, notify_mode, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING id
             """,
             (
                 owner_id,
@@ -206,14 +323,15 @@ def add_watch(
                 datetime.now(UTC).isoformat(),
             ),
         )
+        new_id = cur.fetchone()["id"]
         conn.commit()
-        row = conn.execute("SELECT * FROM watches WHERE id = ?", (cur.lastrowid,)).fetchone()
+        row = conn.execute("SELECT * FROM watches WHERE id = ?", (new_id,)).fetchone()
     return _row_to_watch(row)
 
 
 def list_watches(*, enabled_only: bool = True, owner_id: int | None = None) -> list[Watch]:
     sql = "SELECT * FROM watches"
-    params: list[Any] = []
+    params = []
     if owner_id is not None:
         sql += " WHERE owner_id = ?"
         params.append(owner_id)
@@ -234,8 +352,6 @@ def delete_watch(watch_id: int, *, owner_id: int | None = None) -> None:
         conn.commit()
 
 
-# Белый список защищает от произвольных имён колонок в динамическом UPDATE ниже --
-# **fields идёт из вызывающего кода (бот), доверять именам ключей напрямую нельзя.
 _WATCH_COLUMNS = {
     "query", "price_from", "price_to", "city_id", "city_name", "category_id", "state", "owner_type",
     "stop_words", "poll_mode", "notify_mode", "enabled", "last_polled_at", "last_found_at",
@@ -265,10 +381,10 @@ def update_watch(watch_id: int, *, owner_id: int | None = None, **fields: Any) -
             assignments = ", ".join(f"{name} = ?" for name in fields)
             values = [_serialize_watch_field(name, value) for name, value in fields.items()]
             where = "id = ?"
-            where_values: tuple[Any, ...] = (watch_id,)
+            where_values = (watch_id,)
             if owner_id is not None:
                 where += " AND owner_id = ?"
-                where_values += (owner_id,)
+                where_values = (watch_id, owner_id)
             conn.execute(
                 f"UPDATE watches SET {assignments} WHERE {where}", (*values, *where_values)
             )
@@ -277,7 +393,7 @@ def update_watch(watch_id: int, *, owner_id: int | None = None, **fields: Any) -
         where_values = (watch_id,)
         if owner_id is not None:
             where += " AND owner_id = ?"
-            where_values += (owner_id,)
+            where_values = (watch_id, owner_id)
         row = conn.execute(f"SELECT * FROM watches WHERE {where}", where_values).fetchone()
     if row is None:
         raise ValueError(f"watch {watch_id} не найден")
@@ -291,9 +407,7 @@ def upsert_listing(listing: Listing) -> None:
             INSERT INTO listings (id, url, title, city_id, city_name, region_id, business,
                                    state, category_id, seller_id, seller_name, photo_url,
                                    created_at, first_seen_at)
-            VALUES (:id, :url, :title, :city_id, :city_name, :region_id, :business,
-                    :state, :category_id, :seller_id, :seller_name, :photo_url,
-                    :created_at, :first_seen_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 url = excluded.url, title = excluded.title, city_id = excluded.city_id,
                 city_name = excluded.city_name, region_id = excluded.region_id,
@@ -302,32 +416,28 @@ def upsert_listing(listing: Listing) -> None:
                 seller_name = excluded.seller_name, photo_url = excluded.photo_url,
                 created_at = excluded.created_at
             """,
-            {
-                "id": listing.id,
-                "url": listing.url,
-                "title": listing.title,
-                "city_id": listing.city_id,
-                "city_name": listing.city_name,
-                "region_id": listing.region_id,
-                "business": int(listing.business),
-                "state": listing.state.value if listing.state else None,
-                "category_id": listing.category_id,
-                "seller_id": listing.seller_id,
-                "seller_name": listing.seller_name,
-                "photo_url": listing.photo_url,
-                "created_at": listing.created_at.isoformat(),
-                # Не входит в DO UPDATE SET -- на конфликте это значение отбрасывается,
-                # а не затирает первую встречу объявления при повторном upsert.
-                "first_seen_at": datetime.now(UTC).isoformat(),
-            },
+            (
+                listing.id,
+                listing.url,
+                listing.title,
+                listing.city_id,
+                listing.city_name,
+                listing.region_id,
+                int(listing.business),
+                listing.state.value if listing.state else None,
+                listing.category_id,
+                listing.seller_id,
+                listing.seller_name,
+                listing.photo_url,
+                listing.created_at.isoformat(),
+                datetime.now(UTC).isoformat(),
+            ),
         )
         conn.commit()
 
 
 def record_price(listing: Listing) -> bool:
     with _connection() as conn:
-        # id DESC как решающий признак, не только seen_at: при опросе раз в 25 с два
-        # снимка вполне могут лечь в одну секунду по системным часам.
         last = conn.execute(
             "SELECT price, currency FROM price_snapshots WHERE listing_id = ? "
             "ORDER BY seen_at DESC, id DESC LIMIT 1",
@@ -361,8 +471,6 @@ def mark_seen(watch_id: int, listing: Listing) -> None:
         ).fetchone()
         previous = _opt_datetime(row["last_pushup_at"]) if row is not None else None
 
-        # last_pushup_at может только расти: узел с отставшим или пустым pushup_time
-        # (S-07) затирал актуальное, и объявление уведомляло по кругу.
         pushed = listing.pushed_at
         if previous is not None and (pushed is None or pushed <= previous):
             pushed = previous
@@ -398,9 +506,6 @@ def last_pushup(watch_id: int, listing_id: int) -> datetime | None:
     return _opt_datetime(row["last_pushup_at"]) if row is not None else None
 
 
-# Порядок и подписи полей выгрузки -- одни для CSV и JSON (контракты требуют только
-# "полезные поля", формат подписи не оговорён). Подписи русские: файл открывает
-# владелец, а не код.
 _EXPORT_FIELDS: list[tuple[str, str]] = [
     ("id", "ID"),
     ("url", "Ссылка"),
@@ -414,17 +519,12 @@ _EXPORT_FIELDS: list[tuple[str, str]] = [
     ("first_seen_at", "Впервые увидели"),
 ]
 
-# Та же подзапросная развязка id DESC, что и в record_price -- при опросе раз
-# в 20-30 с два снимка могут лечь в одну секунду системных часов.
 _LATEST_PRICE_ID = """
     (SELECT id FROM price_snapshots WHERE listing_id = l.id ORDER BY seen_at DESC, id DESC LIMIT 1)
 """
 
 
 def _export_rows(watch_id: int | None, owner_id: int | None = None) -> list[dict[str, Any]]:
-    # watch_id задан -- берём watch_seen.first_seen_at: это "когда эту вещь увидел
-    # именно этот запрос", а не listings.first_seen_at, который мог набежать раньше
-    # от другого запроса на ту же вещь (дедуп в contracts.md намеренно попарный).
     if watch_id is not None:
         sql = f"""
             SELECT l.id, l.url, l.title, l.city_name, l.category_id, l.business, l.created_at,
@@ -478,10 +578,6 @@ def _export_rows(watch_id: int | None, owner_id: int | None = None) -> list[dict
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
-    # utf-8-sig, не utf-8: без BOM Excel на Windows определяет кодировку файла как
-    # ANSI, и кириллица превращается в кракозябры (AC-10). ';', не ',' -- в
-    # украинской/русской локали Excel запятая уже занята под дробную часть числа
-    # и по ней столбцы не разбиваются.
     with path.open("w", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f, delimiter=";")
         writer.writerow(header for _, header in _EXPORT_FIELDS)
@@ -509,14 +605,6 @@ def export(
 
 
 def purge_old_history(*, retention_days: int, now: datetime | None = None) -> dict[str, int]:
-    """Удаляет то, что уже не нужно хранить, и возвращает счётчики.
-
-    «Ушедшее с OLX» = max(watch_seen.notified_at) старше retention; notified_at
-    обновляется на каждом опросе, поэтому это «когда видели в последний раз». Такое
-    объявление удаляем целиком (вернётся через месяц -- уведомим заново, это новое
-    событие). У живых чистим снимки старше retention, кроме последнего: по нему
-    record_price ловит изменение цены.
-    """
     now = now or datetime.now(UTC)
     cutoff = (now - timedelta(days=retention_days)).isoformat()
     with _connection() as conn:
@@ -531,14 +619,11 @@ def purge_old_history(*, retention_days: int, now: datetime | None = None) -> di
                 (cutoff,),
             ).fetchall()
         ]
-        # Порядок из-за foreign_keys=ON: сначала зависимые строки, потом сами listings.
         params = [(listing_id,) for listing_id in stale]
         conn.executemany("DELETE FROM price_snapshots WHERE listing_id = ?", params)
         conn.executemany("DELETE FROM watch_seen WHERE listing_id = ?", params)
         conn.executemany("DELETE FROM listings WHERE id = ?", params)
 
-        # id автоинкрементный и растёт вместе с seen_at, поэтому MAX(id) на объявление
-        # -- это его самый свежий снимок.
         pruned = conn.execute(
             """
             DELETE FROM price_snapshots
@@ -549,3 +634,19 @@ def purge_old_history(*, retention_days: int, now: datetime | None = None) -> di
         ).rowcount
         conn.commit()
     return {"listings": len(stale), "snapshots": pruned}
+
+
+def track_user(telegram_id: int) -> None:
+    with _connection() as conn:
+        conn.execute(
+            "INSERT INTO users (telegram_id, first_seen_at) VALUES (?, ?) "
+            "ON CONFLICT (telegram_id) DO NOTHING",
+            (telegram_id, datetime.now(UTC).isoformat()),
+        )
+        conn.commit()
+
+
+def count_users() -> int:
+    with _connection() as conn:
+        row = conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()
+    return int(row["c"])

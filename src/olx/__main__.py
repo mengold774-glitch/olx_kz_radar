@@ -11,7 +11,10 @@ async def main() -> None:
     logger.remove()
     logger.add(sys.stderr, level=settings.log_level)
     storage.init_db(settings.db_path)
-    logger.info("БД: {}", settings.db_path)
+    if settings.database_url:
+        logger.info("БД: PostgreSQL (Heroku)")
+    else:
+        logger.info("БД: {}", settings.db_path)
     # Бот и монитор живут в одном процессе: они делят одну SQLite-базу, и разносить
     # их по процессам значило бы разбираться с блокировками ради нулевой выгоды.
     await asyncio.gather(bot.run_bot(), monitor.run_forever())

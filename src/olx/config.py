@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     olx_domain: str = "olx.kz"
 
     db_path: Path = Path("data/olx.db")
+    database_url: str = ""
 
     poll_interval_fast: int = 25
     poll_interval_full: int = 600
