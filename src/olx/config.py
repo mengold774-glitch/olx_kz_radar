@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     telegram_bot_token: str
     telegram_owner_id: int
     telegram_allowed_ids: str = ""
+    telegram_channel: str = "zieglerbots"
     olx_domain: str = "olx.kz"
 
     db_path: Path = Path("data/olx.db")

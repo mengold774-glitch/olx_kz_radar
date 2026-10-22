@@ -54,6 +54,32 @@ def _kb(rows: list[list[tuple[str, str]]]) -> InlineKeyboardMarkup:
     )
 
 
+def _subscribe_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Подписаться", url="https://t.me/zieglerbots")],
+            [InlineKeyboardButton(text="Проверить", callback_data="check_sub")],
+        ]
+    )
+
+
+async def _is_subscribed(bot: Bot, user_id: int) -> bool:
+    try:
+        member = await bot.get_chat_member(f"@{settings.telegram_channel}", user_id)
+        return member.status in ("member", "administrator", "creator")
+    except Exception:
+        return False
+
+
+@router.callback_query(F.data == "check_sub")
+async def cb_check_sub(callback: CallbackQuery, bot: Bot) -> None:
+    if await _is_subscribed(bot, callback.from_user.id):
+        await callback.message.edit_text("Подписка подтверждена. Нажмите /start")
+        await callback.answer("Готово!")
+    else:
+        await callback.answer("Вы ещё не подписаны. Подпишитесь и нажмите «Проверить».", show_alert=True)
+
+
 def _main_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -114,8 +140,14 @@ async def _step(message: Message, state: FSMContext, title: str, body: str, **kw
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message) -> None:
+async def cmd_start(message: Message, bot: Bot) -> None:
     storage.track_user(message.from_user.id)
+    if not await _is_subscribed(bot, message.from_user.id):
+        await message.answer(
+            "Для использования бота подпишитесь на канал @zieglerbots, затем нажмите «Проверить».",
+            reply_markup=_subscribe_keyboard(),
+        )
+        return
     await message.answer(texts.START.format(commands=texts.COMMANDS), reply_markup=_main_keyboard())
 
 
