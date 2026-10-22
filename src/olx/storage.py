@@ -110,6 +110,26 @@ def init_db(path: Path) -> None:
         conn.close()
 
 
+@contextmanager
+def _connection() -> Iterator[sqlite3.Connection]:
+    if _db_path is None:
+        raise StorageError("storage.init_db() ещё не вызван")
+    try:
+        conn = sqlite3.connect(_db_path, timeout=30.0)
+        conn.execute("PRAGMA journal_mode = WAL")
+    except sqlite3.Error as e:
+        raise StorageError(f"БД недоступна: {e}") from e
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    try:
+        yield conn
+    except sqlite3.Error as e:
+        conn.rollback()
+        raise StorageError(f"Ошибка БД: {e}") from e
+    finally:
+        conn.close()
+
+
 def track_user(telegram_id: int) -> None:
     with _connection() as conn:
         conn.execute(
