@@ -143,26 +143,6 @@ def count_users() -> int:
     with _connection() as conn:
         row = conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()
     return int(row["c"])
-    if _db_path is None:
-        raise StorageError("storage.init_db() ещё не вызван")
-    try:
-        # /export, ручной sqlite3 и бэкап держат файл снаружи процесса --
-        # дефолтных 5 с ожидания не хватало.
-        conn = sqlite3.connect(_db_path, timeout=30.0)
-        conn.execute("PRAGMA journal_mode = WAL")
-    except sqlite3.Error as e:
-        raise StorageError(f"БД недоступна: {e}") from e
-    conn.row_factory = sqlite3.Row
-    # SQLite не проверяет внешние ключи по умолчанию -- без этого ON DELETE CASCADE
-    # у watch_seen молча не сработает.
-    conn.execute("PRAGMA foreign_keys = ON")
-    try:
-        yield conn
-    except sqlite3.Error as e:
-        conn.rollback()
-        raise StorageError(f"Ошибка БД: {e}") from e
-    finally:
-        conn.close()
 
 
 def _opt_datetime(value: str | None) -> datetime | None:
