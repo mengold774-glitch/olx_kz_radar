@@ -242,6 +242,8 @@ class _PgConnWrapper:
     def executemany(self, sql, params_seq):
         sql = sql.replace("?", "%s")
         self._cur.executemany(sql, params_seq)
+
+    def commit(self):
         self._conn.commit()
 
     def rollback(self):
