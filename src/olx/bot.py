@@ -115,6 +115,7 @@ async def _step(message: Message, state: FSMContext, title: str, body: str, **kw
 
 @router.message(CommandStart())
 async def cmd_start(message: Message) -> None:
+    storage.track_user(message.from_user.id)
     await message.answer(texts.START.format(commands=texts.COMMANDS), reply_markup=_main_keyboard())
 
 
@@ -139,6 +140,14 @@ async def cmd_status(message: Message) -> None:
             fast_interval=settings.poll_interval_fast,
         )
     )
+
+
+@router.message(Command("stats"))
+async def cmd_stats(message: Message) -> None:
+    if message.from_user.id != settings.telegram_owner_id:
+        await message.answer("Команда доступна только владельцу.")
+        return
+    await message.answer(f"Пользователей бота: {storage.count_users()}")
 
 
 @router.message(Command("pause"))

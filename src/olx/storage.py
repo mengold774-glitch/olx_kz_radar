@@ -80,6 +80,11 @@ CREATE TABLE IF NOT EXISTS watch_seen (
     notified_at    TEXT,
     PRIMARY KEY (watch_id, listing_id)
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    telegram_id INTEGER PRIMARY KEY,
+    first_seen_at TEXT NOT NULL
+);
 """
 
 # Публичные функции не принимают connection/path (см. сигнатуры в контрактах) --
@@ -105,8 +110,19 @@ def init_db(path: Path) -> None:
         conn.close()
 
 
-@contextmanager
-def _connection() -> Iterator[sqlite3.Connection]:
+def track_user(telegram_id: int) -> None:
+    with _connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO users (telegram_id, first_seen_at) VALUES (?, ?)",
+            (telegram_id, datetime.now(UTC).isoformat()),
+        )
+        conn.commit()
+
+
+def count_users() -> int:
+    with _connection() as conn:
+        row = conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()
+    return int(row["c"])
     if _db_path is None:
         raise StorageError("storage.init_db() ещё не вызван")
     try:
@@ -507,7 +523,11 @@ def purge_old_history(*, retention_days: int, now: datetime | None = None) -> di
         stale = [
             row["id"]
             for row in conn.execute(
-                """
+CREATE TABLE IF NOT EXISTS users (
+    telegram_id INTEGER PRIMARY KEY,
+    first_seen_at TEXT NOT NULL
+);
+"""
                 SELECT l.id FROM listings l
                 WHERE (SELECT MAX(ws.notified_at) FROM watch_seen ws
                        WHERE ws.listing_id = l.id) < ?
