@@ -84,7 +84,9 @@ CREATE TABLE IF NOT EXISTS users (
 _SCHEMAPG = """
 CREATE TABLE IF NOT EXISTS watches (
     id              SERIAL PRIMARY KEY,
-    owner_id        INTEGER NOT NULL DEFAULT 0,
+    -- Telegram user IDs no longer fit into a signed 32-bit INTEGER.
+    -- Keep this BIGINT even though SQLite accepts any integer width locally.
+    owner_id        BIGINT NOT NULL DEFAULT 0,
     query           TEXT    NOT NULL,
     price_from      INTEGER,
     price_to        INTEGER,
@@ -139,7 +141,7 @@ CREATE TABLE IF NOT EXISTS watch_seen (
 );
 
 CREATE TABLE IF NOT EXISTS users (
-    telegram_id INTEGER PRIMARY KEY,
+    telegram_id BIGINT PRIMARY KEY,
     first_seen_at TEXT NOT NULL
 );
 """
@@ -173,6 +175,11 @@ def init_db(path: Path) -> None:
             if not cur.fetchone():
                 cur.execute("ALTER TABLE watches ADD COLUMN owner_id INTEGER NOT NULL DEFAULT 0")
                 cur.execute("UPDATE watches SET owner_id = %s WHERE owner_id = 0", (settings.telegram_owner_id,))
+            # Earlier Heroku schema used PostgreSQL INTEGER (signed 32 bit) for
+            # Telegram IDs. Newer account IDs can be larger, which otherwise
+            # makes /add and /start fail with NumericValueOutOfRange.
+            cur.execute("ALTER TABLE watches ALTER COLUMN owner_id TYPE BIGINT")
+            cur.execute("ALTER TABLE users ALTER COLUMN telegram_id TYPE BIGINT")
     else:
         path.parent.mkdir(parents=True, exist_ok=True)
         _db_path = path
