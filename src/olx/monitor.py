@@ -197,7 +197,14 @@ def poll_once(watch: Watch, *, proxy: str | None = None) -> list[Find]:
     fields: dict[str, object] = {"last_polled_at": now}
     if finds:
         fields["last_found_at"] = now
-    storage.update_watch(watch.id, **fields)
+    try:
+        storage.update_watch(watch.id, **fields)
+    except ValueError:
+        # Пользователь мог удалить запрос, пока долгий первый опрос разбирал
+        # выдачу. В этом случае находки уже некому доставлять; главное — не
+        # уронить весь монитор и остальные активные запросы.
+        logger.info("Запрос #{} удалён во время опроса, пропускаю результат", watch.id)
+        return []
 
     return finds
 

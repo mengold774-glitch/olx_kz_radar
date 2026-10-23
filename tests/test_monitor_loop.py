@@ -155,6 +155,26 @@ async def test_first_poll_notifies_current_listings(
     assert len(storage.seen_ids(watch.id)) == 52
 
 
+@pytest.mark.asyncio
+async def test_deleting_watch_during_poll_does_not_crash_monitor(
+    watch, no_sleep, sample_response, monkeypatch
+):
+    """A stale watch must not make every other watch stop polling."""
+    monkeypatch.setattr(monitor.api, "search_raw", lambda *a, **kw: sample_response)
+    original_update = storage.update_watch
+
+    def delete_before_final_update(watch_id, **fields):
+        if "last_polled_at" in fields:
+            storage.delete_watch(watch_id)
+        return original_update(watch_id, **fields)
+
+    monkeypatch.setattr(storage, "update_watch", delete_before_final_update)
+
+    await monitor._cycle(Poller(proxies=[]))
+
+    assert storage.list_watches(enabled_only=False) == []
+
+
 def _make_due(watch_id: int) -> None:
     """Сдвигает последний опрос в прошлое, чтобы запрос снова стал «пора».
 
